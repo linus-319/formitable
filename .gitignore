@@ -1,0 +1,31 @@
+# Environment variables
+.env
+.env.*
+
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.log
+
+# Django
+backend/django/staticfiles/
+backend/django/media/
+
+# Virtual environments
+.venv/
+venv/
+
+# Node
+node_modules/
+dist/
+
+# Docker
+*.pid
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
