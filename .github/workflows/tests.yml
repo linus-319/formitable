@@ -25,4 +25,6 @@ jobs:
         pip install -r backend/django/requirements.txt
 
     - name: Execute Tests
-      run: pytest
+      run: pip install -r requirements-dev.txt
+        
+        
