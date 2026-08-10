@@ -30,3 +30,7 @@ dist/
 # IDE
 .vscode/
 .idea/
+
+
+# misc
+.pytest_cache/
