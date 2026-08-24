@@ -34,3 +34,4 @@ dist/
 
 # misc
 .pytest_cache/
+cookies.txt
