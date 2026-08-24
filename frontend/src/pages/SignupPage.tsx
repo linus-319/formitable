@@ -8,7 +8,7 @@ export default function SignupPage() {
     const [apiError, setApiError] = useState("");
     const passwordsMatch = confirmPassword === "" || password === confirmPassword;
 
-    function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
 
         setApiError("");
@@ -17,12 +17,16 @@ export default function SignupPage() {
             return;
         }
 
-        signup({
-            email: email,
-            password: password
-        })
-        .then((data) => console.log("Signup successful:", data))
-        .catch((error) => setApiError(error.message));
+        try {
+            const data = await signup({
+                email: email,
+                password: password,
+            });
+
+            console.log("Signup successful:", data);
+        } catch (error) {
+            setApiError((error as Error).message);
+        }
     }
 
     return (
