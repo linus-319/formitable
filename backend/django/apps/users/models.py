@@ -7,6 +7,12 @@ class User(AbstractUser):
     username = None
     email = models.EmailField(unique=True)
 
+    organizations = models.ManyToManyField(
+        "organizations.Organization",
+        blank=True,
+        related_name="users",
+    )
+
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
