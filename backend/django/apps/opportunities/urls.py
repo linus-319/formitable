@@ -2,7 +2,7 @@ from django.urls import path
 
 from .views import (
     OpportunityListCreateView,
-    OpportunityRetrieveUpdateView,
+    OpportunityRetrieveUpdateDestroyView,
 )
 
 urlpatterns = [
@@ -13,7 +13,7 @@ urlpatterns = [
     ),
     path(
         "<int:pk>/",
-        OpportunityRetrieveUpdateView.as_view(),
+        OpportunityRetrieveUpdateDestroyView.as_view(),
         name="opportunity-detail",
     ),
 ]

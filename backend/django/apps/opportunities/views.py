@@ -21,7 +21,7 @@ class OpportunityListCreateView(generics.ListCreateAPIView):
         )
 
 
-class OpportunityRetrieveUpdateView(generics.RetrieveUpdateAPIView):
+class OpportunityRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = OpportunitySerializer
     permission_classes = [IsAuthenticated]
 
