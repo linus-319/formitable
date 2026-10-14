@@ -15,9 +15,9 @@ export default function OrganizationSelector({ handleSelectOrganization }: Organ
     return (
         <>
         {organizations.map((organization) => (
-            <div onClick={() => handleSelectOrganization(organization)} key={organization.id}>
-                <p>{organization.name}</p>
-            </div>
+            <button onClick={() => handleSelectOrganization(organization)} key={organization.id}>
+                {organization.name}
+            </button>
         ))}
         </>
     )

@@ -18,12 +18,10 @@ export default function SignupPage() {
         }
 
         try {
-            const data = await signup({
+            await signup({
                 email: email,
                 password: password,
             });
-
-            console.log("Signup successful:", data);
         } catch (error) {
             setApiError((error as Error).message);
         }

@@ -16,16 +16,19 @@ export default function OpportunityList({ selectedOrganization, opportunities, o
 
     return (
         <div>
-            <h1>Your org's opportunities</h1>
-            {opportunities.map((opportunity) => 
-                <OpportunityCard 
-                    key={opportunity.id} 
-                    opportunity={opportunity} 
-                    selectedOrganization={selectedOrganization}
-                    onSave={onUpdate}
-                    onRemove={onDelete}
-                />
-            )}
+            <h2>Your org's opportunities</h2>
+            <ul>
+                {opportunities.map((opportunity) => 
+                    <li key={opportunity.id} >
+                        <OpportunityCard 
+                            opportunity={opportunity} 
+                            selectedOrganization={selectedOrganization}
+                            onSave={onUpdate}
+                            onRemove={onDelete}
+                        />
+                    </li>
+                )}
+            </ul>
         </div>
     )
 }
