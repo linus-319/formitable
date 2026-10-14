@@ -20,18 +20,33 @@ vi.mock('../context/useAuth', () => ({
     }),
 }));
 
+
 vi.mock('../components/OpportunityList', () => ({
     default: ({
         opportunities,
+        onUpdate,
         onDelete,
     }: {
         opportunities: Opportunity[];
+        onUpdate: (opportunity: Opportunity) => void;
         onDelete: (opportunity: Opportunity) => void | Promise<void>;
     }) => (
         <ul>
             {opportunities.map((opportunity) => (
                 <li key={opportunity.id}>
                     <span>{opportunity.name}</span>
+
+                    <button
+                        onClick={() =>
+                            onUpdate({
+                                ...opportunity,
+                                name: `Updated ${opportunity.name}`,
+                            })
+                        }
+                    >
+                        Update {opportunity.name}
+                    </button>
+
                     <button onClick={() => onDelete(opportunity)}>
                         Delete {opportunity.name}
                     </button>
@@ -40,6 +55,7 @@ vi.mock('../components/OpportunityList', () => ({
         </ul>
     ),
 }));
+
 
 vi.mock('../components/OpportunityForm', () => ({
     default: () => <div>Opportunity form</div>,
@@ -246,6 +262,56 @@ describe('DashboardPage opportunity', () => {
             });
 
             // Verify the other opportunity remains.
+            expect(
+                screen.getByText('Arts Fellowship')
+            ).toBeInTheDocument();
+        });
+    });
+
+    describe('updating', () => {
+        it('updates an opportunity in the list without removing other opportunities', async () => {
+            const user = userEvent.setup();
+
+            vi.mocked(getOpportunities).mockResolvedValue(
+                foundationOpportunities
+            );
+
+            render(<DashboardPage />);
+
+            // Select the organization.
+            await user.click(
+                screen.getByRole('button', {
+                    name: 'Formitable Foundation',
+                })
+            );
+
+            // Wait for the original opportunities to appear.
+            expect(
+                await screen.findByText('Community Grant')
+            ).toBeInTheDocument();
+
+            expect(
+                screen.getByText('Arts Fellowship')
+            ).toBeInTheDocument();
+
+            // Simulate updating Community Grant.
+            await user.click(
+                screen.getByRole('button', {
+                    name: 'Update Community Grant',
+                })
+            );
+
+            // The updated opportunity should appear.
+            expect(
+                screen.getByText('Updated Community Grant')
+            ).toBeInTheDocument();
+
+            // The old version should be gone.
+            expect(
+                screen.queryByText('Community Grant')
+            ).not.toBeInTheDocument();
+
+            // The other opportunity should still be present.
             expect(
                 screen.getByText('Arts Fellowship')
             ).toBeInTheDocument();
