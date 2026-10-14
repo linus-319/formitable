@@ -3,11 +3,12 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Organization } from '../api/organizations';
 import type { Opportunity } from '../api/opportunities';
-import { getOpportunities } from '../api/opportunities';
+import { getOpportunities, deleteOpportunity } from '../api/opportunities';
 import DashboardPage from './DashboardPage';
 
 vi.mock('../api/opportunities', () => ({
     getOpportunities: vi.fn(),
+    deleteOpportunity: vi.fn(),
 }));
 
 vi.mock('../context/useAuth', () => ({
@@ -22,12 +23,19 @@ vi.mock('../context/useAuth', () => ({
 vi.mock('../components/OpportunityList', () => ({
     default: ({
         opportunities,
+        onDelete,
     }: {
-        opportunities: { id: number; name: string }[];
+        opportunities: Opportunity[];
+        onDelete: (opportunity: Opportunity) => void | Promise<void>;
     }) => (
         <ul>
             {opportunities.map((opportunity) => (
-                <li key={opportunity.id}>{opportunity.name}</li>
+                <li key={opportunity.id}>
+                    <span>{opportunity.name}</span>
+                    <button onClick={() => onDelete(opportunity)}>
+                        Delete {opportunity.name}
+                    </button>
+                </li>
             ))}
         </ul>
     ),
@@ -73,7 +81,7 @@ vi.mock('../components/OrganizationSelector', () => ({
     ),
 }));
 
-describe('DashboardPage opportunity loading', () => {
+describe('DashboardPage opportunity', () => {
     const foundationOpportunities: Opportunity[] = [
         {
             id: 101,
@@ -112,79 +120,135 @@ describe('DashboardPage opportunity loading', () => {
 
     beforeEach(() => {
         vi.mocked(getOpportunities).mockReset();
+        vi.mocked(deleteOpportunity).mockReset();
     });
 
-    it('does not load opportunities before an organization is selected', () => {
-        render(<DashboardPage />);
+    describe('loading', () => {
+        it('does not load opportunities before an organization is selected', () => {
+            render(<DashboardPage />);
 
-        expect(getOpportunities).not.toHaveBeenCalled();
-    });
+            expect(getOpportunities).not.toHaveBeenCalled();
+        });
 
-    it('loads and displays opportunities for the selected organization', async () => {
-        const user = userEvent.setup();
+        it('loads and displays opportunities for the selected organization', async () => {
+            const user = userEvent.setup();
 
-        vi.mocked(getOpportunities).mockResolvedValue(
-            foundationOpportunities
-        );
+            vi.mocked(getOpportunities).mockResolvedValue(
+                foundationOpportunities
+            );
 
-        render(<DashboardPage />);
+            render(<DashboardPage />);
 
-        await user.click(
-            screen.getByRole('button', {
-                name: 'Formitable Foundation',
-            })
-        );
+            await user.click(
+                screen.getByRole('button', {
+                    name: 'Formitable Foundation',
+                })
+            );
 
-        expect(getOpportunities).toHaveBeenCalledWith(1);
+            expect(getOpportunities).toHaveBeenCalledWith(1);
 
-        expect(
-            await screen.findByText('Community Grant')
-        ).toBeInTheDocument();
-
-        expect(
-            screen.getByText('Arts Fellowship')
-        ).toBeInTheDocument();
-    });
-
-    it('reloads opportunities when the selected organization changes', async () => {
-        const user = userEvent.setup();
-
-        vi.mocked(getOpportunities).mockImplementation(
-            async (organizationId: number) => {
-                return organizationId === 1
-                    ? foundationOpportunities
-                    : artsOpportunities;
-            }
-        );
-
-        render(<DashboardPage />);
-
-        await user.click(
-            screen.getByRole('button', {
-                name: 'Formitable Foundation',
-            })
-        );
-
-        expect(
-            await screen.findByText('Community Grant')
-        ).toBeInTheDocument();
-
-        await user.click(
-            screen.getByRole('button', {
-                name: 'Community Arts',
-            })
-        );
-
-        expect(getOpportunities).toHaveBeenLastCalledWith(2);
-
-        expect(
-            await screen.findByText('Youth Arts Program')
-        ).toBeInTheDocument();
-
-        await waitFor(() => {
             expect(
-                screen.queryByText('Community Grant')
-            ).not.toBeInTheDocument();
+                await screen.findByText('Community Grant')
+            ).toBeInTheDocument();
+
+            expect(
+                screen.getByText('Arts Fellowship')
+            ).toBeInTheDocument();
+        });
+
+        it('reloads opportunities when the selected organization changes', async () => {
+            const user = userEvent.setup();
+
+            vi.mocked(getOpportunities).mockImplementation(
+                async (organizationId: number) => {
+                    return organizationId === 1
+                        ? foundationOpportunities
+                        : artsOpportunities;
+                }
+            );
+
+            render(<DashboardPage />);
+
+            await user.click(
+                screen.getByRole('button', {
+                    name: 'Formitable Foundation',
+                })
+            );
+
+            expect(
+                await screen.findByText('Community Grant')
+            ).toBeInTheDocument();
+
+            await user.click(
+                screen.getByRole('button', {
+                    name: 'Community Arts',
+                })
+            );
+
+            expect(getOpportunities).toHaveBeenLastCalledWith(2);
+
+            expect(
+                await screen.findByText('Youth Arts Program')
+            ).toBeInTheDocument();
+
+            await waitFor(() => {
+                expect(
+                    screen.queryByText('Community Grant')
+                ).not.toBeInTheDocument();
+            });
+        });
+    });
+
+    describe('deleting', () => {
+        it('deletes an opportunity and keeps the others in the list', async () => {
+            const user = userEvent.setup();
+
+            vi.mocked(getOpportunities).mockResolvedValue(
+                foundationOpportunities
+            );
+            vi.mocked(deleteOpportunity).mockResolvedValue(undefined);
+
+            render(<DashboardPage />);
+
+            // Select the organization to load its opportunities.
+            await user.click(
+                screen.getByRole('button', {
+                    name: 'Formitable Foundation',
+                })
+            );
+
+            // Wait for the opportunities to appear.
+            expect(
+                await screen.findByText('Community Grant')
+            ).toBeInTheDocument();
+
+            expect(
+                screen.getByText('Arts Fellowship')
+            ).toBeInTheDocument();
+
+            // Delete Community Grant.
+            await user.click(
+                screen.getByRole('button', {
+                    name: 'Delete Community Grant',
+                })
+            );
+
+            // Verify the API received the correct organization and opportunity IDs.
+            await waitFor(() => {
+                expect(deleteOpportunity).toHaveBeenCalledWith(1, 101);
+            });
+
+            // Verify the deleted opportunity disappears.
+            await waitFor(() => {
+                expect(
+                    screen.queryByText('Community Grant')
+                ).not.toBeInTheDocument();
+            });
+
+            // Verify the other opportunity remains.
+            expect(
+                screen.getByText('Arts Fellowship')
+            ).toBeInTheDocument();
         });
     });
 });
